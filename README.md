@@ -25,7 +25,8 @@ curl -fsSL https://raw.githubusercontent.com/dam-agents/plain-wiki/main/bootstra
   `templates/` in this repo** rather than embedding copies, so `templates/` is
   the single source of truth — there is nothing to keep in sync.
 - [`templates/CLAUDE.md`](templates/CLAUDE.md) — the operating manual the agent
-  reads every session (layout, note format, the ingest → answer → maintain loop).
+  reads every session (layout, note format, the ingest → answer → maintain →
+  document loop, and the shape of the usage guide).
 - [`templates/.claude/commands/wiki-onboard.md`](templates/.claude/commands/wiki-onboard.md)
   — the `/wiki-onboard` command DAM runs as the opening turn of a fresh KB to
   greet the user.

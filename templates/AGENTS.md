@@ -2,7 +2,15 @@
 # Plain Wiki
 
 You maintain a plain-text knowledge wiki in this workspace. It is pure markdown —
-no tools or scripts beyond reading, searching, and writing files.
+no tools or scripts beyond reading, searching, and writing files. This manual
+lives in `AGENTS.md` and applies whichever agent harness you are (Claude Code
+imports it from `CLAUDE.md`; Bob is pointed here from its rules).
+
+## Onboarding
+When a session opens with the message `/wiki-onboard` and your harness did not
+expand it into instructions (Codex exposes it as `/prompts:wiki-onboard`; Bob has
+no command files), follow `.claude/commands/wiki-onboard.md` in this workspace —
+it is the welcome the platform asks you to give.
 
 ## Layout
 - `wiki/` — your memory. One atomic note per topic, kebab-case filename

@@ -10,13 +10,17 @@ same `/wiki-onboard` entry point, none of the machinery.
 
 ## How DAM uses it
 
-When a user creates a Knowledge Base with the **Plain Wiki** template, DAM runs
-this repo's `bootstrap.sh` once in the fresh agent's workspace (no agent turn),
-naming the harness the sandbox runs:
+When a user creates a Knowledge Base with the **Plain Wiki** kit, DAM seeds this
+repo into the fresh agent's workspace at the commit its catalog resolved and
+runs, from that checkout and with no agent turn:
 
 ```
-curl -fsSL https://raw.githubusercontent.com/dam-agents/plain-wiki/main/bootstrap.sh | PLAIN_WIKI_HARNESS=codex bash
+bash bootstrap.sh
 ```
+
+Run from a checkout, the bootstrap reads `templates/` from it, so nothing is
+fetched at install. The harness image names the harness the sandbox runs in
+`PLATFORM_HARNESS`, and the bootstrap reads that.
 
 ## Harnesses
 
@@ -32,8 +36,9 @@ reads commands:
 | Bob | `~/.bob/rules/plain-wiki.md` points at the workspace `AGENTS.md` | none — the manual's Onboarding rule maps the bare message |
 
 `PLAIN_WIKI_HARNESS` takes a comma/space-separated list of `claude-code`,
-`codex`, `pi`, `bob`, or `all`; unset, the bootstrap wires every harness CLI it
-finds on `PATH`, else `claude-code`. The workspace copy under
+`codex`, `pi`, `bob`, or `all`; unset, the bootstrap wires the family named by
+`PLATFORM_HARNESS` (set in the platform's harness images), else every harness
+CLI it finds on `PATH`, else `claude-code`. The workspace copy under
 `.claude/commands/` is installed for every harness — it is the fallback the
 manual points harnesses without command files at.
 
@@ -83,7 +88,9 @@ ls ~/.codex/prompts ~/.pi/agent/prompts ~/.bob/rules
 bash <(curl ...)        # re-run: should be a no-op, no duplicate manual block
 ```
 
-A local checkout works too: `PLAIN_WIKI_BASE=file:///path/to/plain-wiki`.
+A local checkout works too: `bash /path/to/plain-wiki/bootstrap.sh` reads
+`templates/` from that checkout, and `PLAIN_WIKI_BASE=file:///path/to/plain-wiki`
+points a bootstrap fetched from elsewhere at one.
 
 ## License
 

@@ -4,10 +4,13 @@
 # Installs the plain-wiki conventions into the current workspace: a markdown
 # knowledge directory, an operating manual the harness reads every session, and
 # the /wiki-onboard command the platform runs to greet the user. No packages,
-# no runtime network beyond fetching this repo's own files — the wiki operates
-# entirely offline once installed.
+# and no network at all when run from a checkout of this repo — the wiki
+# operates entirely offline once installed.
 #
-# Invoked once at Knowledge Base create via:
+# Invoked once at Knowledge Base create. The platform seeds this repo into the
+# fresh agent's workspace at a pinned commit and runs, from that checkout:
+#   bash bootstrap.sh
+# From anywhere else it still works over the network:
 #   curl -fsSL https://raw.githubusercontent.com/dam-agents/plain-wiki/main/bootstrap.sh | bash
 #
 # The manual lands in AGENTS.md (read natively by Codex and Pi); each selected
@@ -15,21 +18,31 @@
 # a rules file points at it for Bob — and the /wiki-onboard command lands where
 # that harness reads commands. Which harnesses get wired, first match wins:
 #   PLAIN_WIKI_HARNESS   comma/space-separated: claude-code codex pi bob all
+#   PLATFORM_HARNESS     the family the platform's harness image runs (set in the image)
 #   autodetect           every harness CLI found on PATH (claude, codex, pi, bob)
 #   fallback             claude-code
 #
 # `templates/` in this repo is the single source of truth for the manual and
-# the command; this script fetches them rather than embedding copies, so there
-# is nothing to keep in sync. Idempotent and non-destructive: it never
+# the command. Run from a checkout, the script reads them from that checkout;
+# run over the network, it fetches them — either way nothing is embedded here,
+# so there is nothing to keep in sync. Idempotent and non-destructive: it never
 # overwrites your notes, and re-running it is a no-op.
 #
 # `set -euo pipefail` matters: any failed fetch aborts with a non-zero status,
 # so the platform retries instead of leaving a half-installed wiki.
 set -euo pipefail
 
-# Where to fetch the template files from. Override to test a fork or a branch,
-# e.g. PLAIN_WIKI_BASE=https://raw.githubusercontent.com/me/plain-wiki/dev,
-# or a local checkout: PLAIN_WIKI_BASE=file:///path/to/plain-wiki.
+# Where the template files come from: PLAIN_WIKI_BASE when set (a fork or a
+# branch, e.g. https://raw.githubusercontent.com/me/plain-wiki/dev, or another
+# checkout as file:///path/to/plain-wiki), else the checkout this script runs
+# from, else the published main branch.
+SELF="${BASH_SOURCE[0]:-}"
+if [ -z "${PLAIN_WIKI_BASE:-}" ] && [ -n "$SELF" ] && [ -f "$SELF" ]; then
+  SELF_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+  if [ -f "$SELF_DIR/templates/AGENTS.md" ]; then
+    PLAIN_WIKI_BASE="file://$SELF_DIR"
+  fi
+fi
 BASE="${PLAIN_WIKI_BASE:-https://raw.githubusercontent.com/dam-agents/plain-wiki/main}"
 KNOWN_HARNESSES="claude-code codex pi bob"
 MARKER="<!-- plain-wiki:managed (do not edit this heading) -->"
@@ -43,7 +56,7 @@ detect_harnesses() {
   echo "${found# }"
 }
 
-HARNESSES="${PLAIN_WIKI_HARNESS:-}"
+HARNESSES="${PLAIN_WIKI_HARNESS:-${PLATFORM_HARNESS:-}}"
 HARNESSES="${HARNESSES//,/ }"
 if [ "$HARNESSES" = "all" ]; then
   HARNESSES="$KNOWN_HARNESSES"

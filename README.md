@@ -6,7 +6,7 @@ learns as markdown notes in `wiki/`. Pure markdown and conventions — no indexe
 no runtime dependencies, works fully offline once installed.
 
 It is the stripped-down counterpart to [`llm-wiki`](https://github.com/dam-agents/llm-wiki-v2):
-same `/wiki-onboard` entry point, none of the machinery.
+same first-session onboarding, none of the machinery.
 
 ## How DAM uses it
 
@@ -24,54 +24,56 @@ fetched at install. The harness image names the harness the sandbox runs in
 
 ## Harnesses
 
-The manual lands in `AGENTS.md`, which Codex and Pi read natively; each selected
-harness then gets its own hook onto it and the `/wiki-onboard` command where it
-reads commands:
+The manual lands in `AGENTS.md`, which Codex and Pi read natively; each other
+harness gets its own hook onto it:
 
-| Harness | Manual | `/wiki-onboard` |
-|---|---|---|
-| Claude Code | `CLAUDE.md` gains an `@AGENTS.md` import | `.claude/commands/wiki-onboard.md` → `/wiki-onboard` |
-| Codex | `AGENTS.md` (native) | `$CODEX_HOME/prompts/wiki-onboard.md` → `/prompts:wiki-onboard` |
-| Pi | `AGENTS.md` (native) | `~/.pi/agent/prompts/wiki-onboard.md` → `/wiki-onboard` |
-| Bob | `~/.bob/rules/plain-wiki.md` points at the workspace `AGENTS.md` | none — the manual's Onboarding rule maps the bare message |
+| Harness | Manual |
+|---|---|
+| Claude Code | `CLAUDE.md` gains an `@AGENTS.md` import |
+| Codex | `AGENTS.md` (native) |
+| Pi | `AGENTS.md` (native) |
+| Bob | `~/.bob/rules/plain-wiki.md` points at the workspace `AGENTS.md` |
+
+Onboarding needs no per-harness wiring: it is `ONBOARDING.md` in the workspace,
+and the platform's first turn points whichever harness is running at it.
 
 `PLAIN_WIKI_HARNESS` takes a comma/space-separated list of `claude-code`,
 `codex`, `pi`, `bob`, or `all`; unset, the bootstrap wires the family named by
 `PLATFORM_HARNESS` (set in the platform's harness images), else every harness
-CLI it finds on `PATH`, else `claude-code`. The workspace copy under
-`.claude/commands/` is installed for every harness — it is the fallback the
-manual points harnesses without command files at.
+CLI it finds on `PATH`, else `claude-code`.
 
 ## Layout
 
 - [`bootstrap.sh`](bootstrap.sh) — the installer. Creates the directories, seeds
-  `wiki/index.md`, appends the operating manual to `AGENTS.md`, installs the
-  `/wiki-onboard` command, and wires each selected harness (table above). It
-  **fetches the manual and the command from `templates/` in this repo** rather
-  than embedding copies, so `templates/` is the single source of truth — there
-  is nothing to keep in sync.
+  `wiki/index.md`, appends the operating manual to `AGENTS.md`, puts
+  `ONBOARDING.md` in place if it is missing, and wires each selected harness
+  (table above). It **fetches the manual from `templates/` in this repo** rather
+  than embedding a copy, so there is nothing to keep in sync.
 - [`templates/AGENTS.md`](templates/AGENTS.md) — the operating manual the agent
   reads every session (layout, note format, the ingest → answer → maintain →
   document loop, the shape of the usage guide, and the onboarding rule for
   harnesses without command files).
-- [`templates/commands/wiki-onboard.md`](templates/commands/wiki-onboard.md)
-  — the `/wiki-onboard` command DAM runs as the opening turn of a fresh KB to
-  greet the user.
+- [`ONBOARDING.md`](ONBOARDING.md) — the first session: the checklist the agent
+  reports to the platform, the welcome, taking in the first material, and
+  publishing the knowledge base.
 
 To change the wiki's behaviour, edit the files under `templates/`; `bootstrap.sh`
 picks them up on the next install.
 
 ## Contract with the platform
 
-Every DAM KB template's bootstrap **must install a `/wiki-onboard` command** — the
-platform runs it as a fresh KB's opening turn to greet the user.
+This repository is a starter kit: [`kit.yaml`](kit.yaml) describes it, the
+platform seeds the repo as the agent's workspace, runs `install.command`, and
+then opens the first session with a briefing that ends in *follow
+`ONBOARDING.md`*. So the kit **must ship `ONBOARDING.md` at its root**, and that
+file is what asks the user for anything.
 
 ## Versioning
 
 The platform installs from `main`, so a push to `main` takes effect for every
 **new** Knowledge Base immediately (existing ones are not re-bootstrapped). There
-is no pinned release yet; if the platform later pins a tag or commit, update the
-URL in DAM's `install-command.ts` in lockstep.
+is no pinned release yet; the curated catalog resolves this repo to a commit on
+each refresh, so a Knowledge Base is always seeded from an exact commit.
 
 ## Develop / test
 
@@ -83,8 +85,8 @@ mkdir /tmp/pw && cd /tmp/pw
 PLAIN_WIKI_BASE=https://raw.githubusercontent.com/<you>/plain-wiki/<branch> \
   PLAIN_WIKI_HARNESS=all \
   bash <(curl -fsSL https://raw.githubusercontent.com/<you>/plain-wiki/<branch>/bootstrap.sh)
-find . -type f          # AGENTS.md, CLAUDE.md, wiki/index.md, .claude/commands/wiki-onboard.md
-ls ~/.codex/prompts ~/.pi/agent/prompts ~/.bob/rules
+find . -type f          # AGENTS.md, CLAUDE.md, ONBOARDING.md, wiki/index.md
+ls ~/.bob/rules
 bash <(curl ...)        # re-run: should be a no-op, no duplicate manual block
 ```
 

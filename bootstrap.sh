@@ -3,9 +3,9 @@
 #
 # Installs the plain-wiki conventions into the current workspace: a markdown
 # knowledge directory, an operating manual the harness reads every session, and
-# the /wiki-onboard command the platform runs to greet the user. No packages,
-# and no network at all when run from a checkout of this repo — the wiki
-# operates entirely offline once installed.
+# ONBOARDING.md, the first-session script the platform points the agent at. No
+# packages, and no network at all when run from a checkout of this repo — the
+# wiki operates entirely offline once installed.
 #
 # Invoked once at Knowledge Base create. The platform seeds this repo into the
 # fresh agent's workspace at a pinned commit and runs, from that checkout:
@@ -15,17 +15,16 @@
 #
 # The manual lands in AGENTS.md (read natively by Codex and Pi); each selected
 # harness then gets its own hook onto it — CLAUDE.md imports it for Claude Code,
-# a rules file points at it for Bob — and the /wiki-onboard command lands where
-# that harness reads commands. Which harnesses get wired, first match wins:
+# a rules file points at it for Bob. Which harnesses get wired, first match wins:
 #   PLAIN_WIKI_HARNESS   comma/space-separated: claude-code codex pi bob all
 #   PLATFORM_HARNESS     the family the platform's harness image runs (set in the image)
 #   autodetect           every harness CLI found on PATH (claude, codex, pi, bob)
 #   fallback             claude-code
 #
-# `templates/` in this repo is the single source of truth for the manual and
-# the command. Run from a checkout, the script reads them from that checkout;
-# run over the network, it fetches them — either way nothing is embedded here,
-# so there is nothing to keep in sync. Idempotent and non-destructive: it never
+# `templates/AGENTS.md` and `ONBOARDING.md` in this repo are the single source
+# of truth. Run from a checkout, the script reads them from that checkout; run
+# over the network, it fetches them — either way nothing is embedded here, so
+# there is nothing to keep in sync. Idempotent and non-destructive: it never
 # overwrites your notes, and re-running it is a no-op.
 #
 # `set -euo pipefail` matters: any failed fetch aborts with a non-zero status,
@@ -73,7 +72,7 @@ done
 
 echo "[plain-wiki] setting up in $(pwd) for: $HARNESSES"
 
-mkdir -p wiki sources .claude/commands
+mkdir -p wiki sources
 
 # --- wiki/index.md (the map) — only if absent -------------------------------
 if [ ! -f wiki/index.md ]; then
@@ -104,12 +103,14 @@ if ! grep -qF "$MARKER" AGENTS.md 2>/dev/null; then
   echo "[plain-wiki] wrote operating manual to AGENTS.md"
 fi
 
-# --- /wiki-onboard command --------------------------------------------------
-# Overwrite each run: it is platform-managed, not user-edited. The workspace
-# copy under .claude/commands/ is installed for every harness — Claude Code
-# reads it natively and the manual points harnesses without command files at it.
-curl -fsSL "$BASE/templates/commands/wiki-onboard.md" -o .claude/commands/wiki-onboard.md
-echo "[plain-wiki] installed /wiki-onboard (.claude/commands/)"
+# --- ONBOARDING.md ----------------------------------------------------------
+# The first-session script, read by whichever harness opens the agent's first
+# turn. The platform seeds this repo as the workspace, so it is already here;
+# a network install fetches it. Never overwritten — it is the user's to edit.
+if [ ! -f ONBOARDING.md ]; then
+  curl -fsSL "$BASE/ONBOARDING.md" -o ONBOARDING.md
+  echo "[plain-wiki] installed ONBOARDING.md"
+fi
 
 # --- per-harness wiring -----------------------------------------------------
 for h in $HARNESSES; do
@@ -121,24 +122,16 @@ for h in $HARNESSES; do
         echo "[plain-wiki] claude-code: CLAUDE.md imports AGENTS.md"
       fi
       ;;
-    codex)
-      prompts="${CODEX_HOME:-$HOME/.codex}/prompts"
-      mkdir -p "$prompts"
-      cp -f .claude/commands/wiki-onboard.md "$prompts/wiki-onboard.md"
-      echo "[plain-wiki] codex: AGENTS.md is read natively; command at $prompts (/prompts:wiki-onboard)"
-      ;;
-    pi)
-      mkdir -p "$HOME/.pi/agent/prompts"
-      cp -f .claude/commands/wiki-onboard.md "$HOME/.pi/agent/prompts/wiki-onboard.md"
-      echo "[plain-wiki] pi: AGENTS.md is read natively; command at ~/.pi/agent/prompts"
+    codex|pi)
+      echo "[plain-wiki] $h: AGENTS.md is read natively"
       ;;
     bob)
       mkdir -p "$HOME/.bob/rules"
       cat > "$HOME/.bob/rules/plain-wiki.md" <<BOB_RULE
 $MARKER
 The workspace \`$(pwd)\` is a knowledge base. Read \`$(pwd)/AGENTS.md\` at the
-start of every session — it is the wiki operating manual — and follow it,
-including its onboarding rule for the \`/wiki-onboard\` message.
+start of every session — it is the wiki operating manual — and follow it. On the
+very first session, follow \`$(pwd)/ONBOARDING.md\` instead.
 BOB_RULE
       echo "[plain-wiki] bob: rules file at ~/.bob/rules/plain-wiki.md"
       ;;

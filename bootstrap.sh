@@ -15,14 +15,14 @@
 #
 # The manual lands in AGENTS.md (read natively by Codex and Pi); each selected
 # harness then gets its own hook onto it — CLAUDE.md imports it for Claude Code,
-# a rules file points at it for Bob. Which harnesses get wired, first match wins:
+# a rules file points at it for Bob — and the /wiki-onboard command lands where
+# that harness reads commands. Which harnesses get wired, first match wins:
 #   PLAIN_WIKI_HARNESS   comma/space-separated: claude-code codex pi bob all
 #   PLATFORM_HARNESS     the family the platform's harness image runs (set in the image)
 #   autodetect           every harness CLI found on PATH (claude, codex, pi, bob)
 #   fallback             claude-code
 #
-# `templates/AGENTS.md` and `ONBOARDING.md` in this repo are the single source
-# of truth. Run from a checkout, the script reads them from that checkout; run
+# `templates/` and `ONBOARDING.md` in this repo are the single source of truth. Run from a checkout, the script reads them from that checkout; run
 # over the network, it fetches them — either way nothing is embedded here, so
 # there is nothing to keep in sync. Idempotent and non-destructive: it never
 # overwrites your notes, and re-running it is a no-op.
@@ -72,7 +72,7 @@ done
 
 echo "[plain-wiki] setting up in $(pwd) for: $HARNESSES"
 
-mkdir -p wiki sources
+mkdir -p wiki sources .claude/commands
 
 # --- wiki/index.md (the map) — only if absent -------------------------------
 if [ ! -f wiki/index.md ]; then
@@ -112,6 +112,13 @@ if [ ! -f ONBOARDING.md ]; then
   echo "[plain-wiki] installed ONBOARDING.md"
 fi
 
+# --- /wiki-onboard command --------------------------------------------------
+# A pointer at ONBOARDING.md, not a second copy of it. Kept so the command
+# keeps working where users and older installs expect it. Overwritten each
+# run: it is platform-managed, not user-edited.
+curl -fsSL "$BASE/templates/commands/wiki-onboard.md" -o .claude/commands/wiki-onboard.md
+echo "[plain-wiki] installed /wiki-onboard (.claude/commands/)"
+
 # --- per-harness wiring -----------------------------------------------------
 for h in $HARNESSES; do
   case "$h" in
@@ -122,8 +129,16 @@ for h in $HARNESSES; do
         echo "[plain-wiki] claude-code: CLAUDE.md imports AGENTS.md"
       fi
       ;;
-    codex|pi)
-      echo "[plain-wiki] $h: AGENTS.md is read natively"
+    codex)
+      prompts="${CODEX_HOME:-$HOME/.codex}/prompts"
+      mkdir -p "$prompts"
+      cp -f .claude/commands/wiki-onboard.md "$prompts/wiki-onboard.md"
+      echo "[plain-wiki] codex: AGENTS.md is read natively; command at $prompts (/prompts:wiki-onboard)"
+      ;;
+    pi)
+      mkdir -p "$HOME/.pi/agent/prompts"
+      cp -f .claude/commands/wiki-onboard.md "$HOME/.pi/agent/prompts/wiki-onboard.md"
+      echo "[plain-wiki] pi: AGENTS.md is read natively; command at ~/.pi/agent/prompts"
       ;;
     bob)
       mkdir -p "$HOME/.bob/rules"

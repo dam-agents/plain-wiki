@@ -6,7 +6,7 @@ learns as markdown notes in `wiki/`. Pure markdown and conventions — no indexe
 no runtime dependencies, works fully offline once installed.
 
 It is the stripped-down counterpart to [`llm-wiki`](https://github.com/dam-agents/llm-wiki-v2):
-same first-session onboarding, none of the machinery.
+same `ONBOARDING.md` entry point, none of the machinery.
 
 ## How DAM uses it
 
@@ -24,18 +24,20 @@ fetched at install. The harness image names the harness the sandbox runs in
 
 ## Harnesses
 
-The manual lands in `AGENTS.md`, which Codex and Pi read natively; each other
-harness gets its own hook onto it:
+The manual lands in `AGENTS.md`, which Codex and Pi read natively; each selected
+harness then gets its own hook onto it and the `/wiki-onboard` command where it
+reads commands:
 
-| Harness | Manual |
-|---|---|
-| Claude Code | `CLAUDE.md` gains an `@AGENTS.md` import |
-| Codex | `AGENTS.md` (native) |
-| Pi | `AGENTS.md` (native) |
-| Bob | `~/.bob/rules/plain-wiki.md` points at the workspace `AGENTS.md` |
+| Harness | Manual | `/wiki-onboard` |
+|---|---|---|
+| Claude Code | `CLAUDE.md` gains an `@AGENTS.md` import | `.claude/commands/wiki-onboard.md` → `/wiki-onboard` |
+| Codex | `AGENTS.md` (native) | `$CODEX_HOME/prompts/wiki-onboard.md` → `/prompts:wiki-onboard` |
+| Pi | `AGENTS.md` (native) | `~/.pi/agent/prompts/wiki-onboard.md` → `/wiki-onboard` |
+| Bob | `~/.bob/rules/plain-wiki.md` points at the workspace `AGENTS.md` | none — the manual's Onboarding rule maps the bare message |
 
-Onboarding needs no per-harness wiring: it is `ONBOARDING.md` in the workspace,
-and the platform's first turn points whichever harness is running at it.
+Onboarding itself is `ONBOARDING.md` in the workspace: the platform's first turn
+points whichever harness is running at it, and `/wiki-onboard` points at the
+same file rather than carrying its own copy of the welcome.
 
 `PLAIN_WIKI_HARNESS` takes a comma/space-separated list of `claude-code`,
 `codex`, `pi`, `bob`, or `all`; unset, the bootstrap wires the family named by
@@ -46,16 +48,19 @@ CLI it finds on `PATH`, else `claude-code`.
 
 - [`bootstrap.sh`](bootstrap.sh) — the installer. Creates the directories, seeds
   `wiki/index.md`, appends the operating manual to `AGENTS.md`, puts
-  `ONBOARDING.md` in place if it is missing, and wires each selected harness
-  (table above). It **fetches the manual from `templates/` in this repo** rather
-  than embedding a copy, so there is nothing to keep in sync.
+  `ONBOARDING.md` in place if it is missing, installs the `/wiki-onboard`
+  command, and wires each selected harness (table above). It **fetches them from
+  this repo** rather than embedding copies, so there is nothing to keep in
+  sync.
 - [`templates/AGENTS.md`](templates/AGENTS.md) — the operating manual the agent
   reads every session (layout, note format, the ingest → answer → maintain →
   document loop, the shape of the usage guide, and the onboarding rule for
   harnesses without command files).
 - [`ONBOARDING.md`](ONBOARDING.md) — the first session: the checklist the agent
-  reports to the platform, the welcome, taking in the first material, and
-  publishing the knowledge base.
+  reports to the platform, the welcome, and publishing the knowledge base.
+- [`templates/commands/wiki-onboard.md`](templates/commands/wiki-onboard.md) —
+  the `/wiki-onboard` command, kept for the installs that expect it. It points
+  at `ONBOARDING.md`; the welcome lives in one place.
 
 To change the wiki's behaviour, edit the files under `templates/`; `bootstrap.sh`
 picks them up on the next install.
@@ -85,8 +90,8 @@ mkdir /tmp/pw && cd /tmp/pw
 PLAIN_WIKI_BASE=https://raw.githubusercontent.com/<you>/plain-wiki/<branch> \
   PLAIN_WIKI_HARNESS=all \
   bash <(curl -fsSL https://raw.githubusercontent.com/<you>/plain-wiki/<branch>/bootstrap.sh)
-find . -type f          # AGENTS.md, CLAUDE.md, ONBOARDING.md, wiki/index.md
-ls ~/.bob/rules
+find . -type f          # AGENTS.md, CLAUDE.md, ONBOARDING.md, wiki/index.md, .claude/commands/wiki-onboard.md
+ls ~/.codex/prompts ~/.pi/agent/prompts ~/.bob/rules
 bash <(curl ...)        # re-run: should be a no-op, no duplicate manual block
 ```
 

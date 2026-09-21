@@ -3,9 +3,9 @@
 #
 # Installs the plain-wiki conventions into the current workspace: a markdown
 # knowledge directory, an operating manual the harness reads every session, and
-# the /wiki-onboard command the platform runs to greet the user. No packages,
-# and no network at all when run from a checkout of this repo — the wiki
-# operates entirely offline once installed.
+# ONBOARDING.md, the first-session script the platform points the agent at. No
+# packages, and no network at all when run from a checkout of this repo — the
+# wiki operates entirely offline once installed.
 #
 # Invoked once at Knowledge Base create. The platform seeds this repo into the
 # fresh agent's workspace at a pinned commit and runs, from that checkout:
@@ -22,10 +22,9 @@
 #   autodetect           every harness CLI found on PATH (claude, codex, pi, bob)
 #   fallback             claude-code
 #
-# `templates/` in this repo is the single source of truth for the manual and
-# the command. Run from a checkout, the script reads them from that checkout;
-# run over the network, it fetches them — either way nothing is embedded here,
-# so there is nothing to keep in sync. Idempotent and non-destructive: it never
+# `templates/` and `ONBOARDING.md` in this repo are the single source of truth. Run from a checkout, the script reads them from that checkout; run
+# over the network, it fetches them — either way nothing is embedded here, so
+# there is nothing to keep in sync. Idempotent and non-destructive: it never
 # overwrites your notes, and re-running it is a no-op.
 #
 # `set -euo pipefail` matters: any failed fetch aborts with a non-zero status,
@@ -104,10 +103,19 @@ if ! grep -qF "$MARKER" AGENTS.md 2>/dev/null; then
   echo "[plain-wiki] wrote operating manual to AGENTS.md"
 fi
 
+# --- ONBOARDING.md ----------------------------------------------------------
+# The first-session script, read by whichever harness opens the agent's first
+# turn. The platform seeds this repo as the workspace, so it is already here;
+# a network install fetches it. Never overwritten — it is the user's to edit.
+if [ ! -f ONBOARDING.md ]; then
+  curl -fsSL "$BASE/ONBOARDING.md" -o ONBOARDING.md
+  echo "[plain-wiki] installed ONBOARDING.md"
+fi
+
 # --- /wiki-onboard command --------------------------------------------------
-# Overwrite each run: it is platform-managed, not user-edited. The workspace
-# copy under .claude/commands/ is installed for every harness — Claude Code
-# reads it natively and the manual points harnesses without command files at it.
+# A pointer at ONBOARDING.md, not a second copy of it. Kept so the command
+# keeps working where users and older installs expect it. Overwritten each
+# run: it is platform-managed, not user-edited.
 curl -fsSL "$BASE/templates/commands/wiki-onboard.md" -o .claude/commands/wiki-onboard.md
 echo "[plain-wiki] installed /wiki-onboard (.claude/commands/)"
 
@@ -137,8 +145,8 @@ for h in $HARNESSES; do
       cat > "$HOME/.bob/rules/plain-wiki.md" <<BOB_RULE
 $MARKER
 The workspace \`$(pwd)\` is a knowledge base. Read \`$(pwd)/AGENTS.md\` at the
-start of every session — it is the wiki operating manual — and follow it,
-including its onboarding rule for the \`/wiki-onboard\` message.
+start of every session — it is the wiki operating manual — and follow it. On the
+very first session, follow \`$(pwd)/ONBOARDING.md\` instead.
 BOB_RULE
       echo "[plain-wiki] bob: rules file at ~/.bob/rules/plain-wiki.md"
       ;;

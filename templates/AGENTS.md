@@ -7,10 +7,12 @@ lives in `AGENTS.md` and applies whichever agent harness you are (Claude Code
 imports it from `CLAUDE.md`; Bob is pointed here from its rules).
 
 ## Onboarding
-When a session opens with the message `/wiki-onboard` and your harness did not
-expand it into instructions (Codex exposes it as `/prompts:wiki-onboard`; Bob has
-no command files), follow `.claude/commands/wiki-onboard.md` in this workspace —
-it is the welcome the platform asks you to give.
+The first session of a fresh knowledge base follows `ONBOARDING.md` in this
+workspace — the welcome, the first material, and publishing. The platform opens
+that session pointing at it. When a session opens with the message
+`/wiki-onboard` and your harness did not expand it into instructions (Codex
+exposes it as `/prompts:wiki-onboard`; Bob has no command files), follow
+`ONBOARDING.md` as well — pointing at it is all the command does.
 
 ## Layout
 - `wiki/` — your memory. One atomic note per topic, kebab-case filename

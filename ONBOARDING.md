@@ -1,14 +1,9 @@
 # Onboarding
 
-The platform opens this agent's first session on this file. It is the whole
-setup: the bootstrap has already run, the wiki directories already exist, and
-there is nothing technical to ask the user. What you need is what only they can
-give — what this knowledge base is for, the first material to remember, and the
-go-ahead to publish it.
+Greet the user and orient them to their knowledge base. The platform opens the
+agent's first session on this file.
 
-## 1. The checklist
-
-What to report as the onboarding checklist, before you say anything else:
+## Checklist
 
 | id | label |
 | --- | --- |
@@ -16,7 +11,7 @@ What to report as the onboarding checklist, before you say anything else:
 | `material` | Give me the first files or notes to remember |
 | `publish` | Say yes to publishing it for your team |
 
-## 2. Welcome the user
+## Welcome
 
 Write a short, warm welcome. This is the very first thing the user sees, so it
 should read like a friendly assistant saying hello — not a terminal session.
@@ -43,21 +38,11 @@ What to say:
 
 Keep it inviting and effortless — the user should feel they can just talk to you.
 
-## 3. Take in the first material
+## Finish
 
-Whatever they give you — files dropped in `sources/`, a path, or something they
-simply tell you — read it and write what is durable into `wiki/`, following
-`AGENTS.md`. One question at a time, in the same warm register; this is a
-conversation, not a form.
+Take in whatever they give you and write it into `wiki/`, following `AGENTS.md`.
+Then offer to publish — a read-only link for the team that stays fresh on its
+own; on a yes, call `share_knowledge_base`.
 
-## 4. Publish it, then finish
-
-Once there is real knowledge in `wiki/`, offer to publish: it gives the team a
-read-only link that stays fresh on its own. On a yes, call
-`share_knowledge_base` and tell them the owner copies the link from the
-knowledge base page — you never see it yourself.
-
-Onboarding is finished when both are true: the user's material is saved as notes
-in `wiki/`, and the knowledge base is published. A user who drifts off, or who
-declines to publish, leaves it unfinished — which is what the platform should
-keep showing.
+Onboarding is finished when the user's material is saved as notes in `wiki/` and
+the knowledge base is published.

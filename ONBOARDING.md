@@ -6,22 +6,15 @@ there is nothing technical to ask the user. What you need is what only they can
 give — what this knowledge base is for, the first material to remember, and the
 go-ahead to publish it.
 
-## 1. Set the checklist first
+## 1. The checklist
 
-Before you say anything to the user, call `set_onboarding_checklist` so they can
-follow along in the platform:
+What to report as the onboarding checklist, before you say anything else:
 
 | id | label |
 | --- | --- |
 | `purpose` | Tell me what this knowledge base is for |
 | `material` | Give me the first files or notes to remember |
 | `publish` | Say yes to publishing it for your team |
-
-Tick each with `complete_onboarding_step` the moment it is genuinely done. If
-the conversation changes what you need, call `set_onboarding_checklist` again —
-the steps you keep stay ticked. Never list your own work as a step: reading
-files, writing notes, refreshing the index and the usage guide are things you
-just do.
 
 ## 2. Welcome the user
 
@@ -55,7 +48,7 @@ Keep it inviting and effortless — the user should feel they can just talk to y
 Whatever they give you — files dropped in `sources/`, a path, or something they
 simply tell you — read it and write what is durable into `wiki/`, following
 `AGENTS.md`. One question at a time, in the same warm register; this is a
-conversation, not a form. Tick `purpose` and `material` as they land.
+conversation, not a form.
 
 ## 4. Publish it, then finish
 
@@ -64,7 +57,7 @@ read-only link that stays fresh on its own. On a yes, call
 `share_knowledge_base` and tell them the owner copies the link from the
 knowledge base page — you never see it yourself.
 
-Call `mark_onboarding_complete` when both are true: the user's material is saved
-as notes in `wiki/`, and the knowledge base is published. Not before. If they
-drift off, or decline to publish, leave it uncalled — an unfinished setup should
-look unfinished.
+Onboarding is finished when both are true: the user's material is saved as notes
+in `wiki/`, and the knowledge base is published. A user who drifts off, or who
+declines to publish, leaves it unfinished — which is what the platform should
+keep showing.

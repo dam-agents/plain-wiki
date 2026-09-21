@@ -9,7 +9,7 @@ agent's first session on this file.
 | --- | --- |
 | `purpose` | Tell me what this knowledge base is for |
 | `material` | Give me the first files or notes to remember |
-| `publish` | Say yes to publishing it for your team |
+| `publish` | Decide whether to publish it for your team |
 
 ## Welcome
 
@@ -42,7 +42,9 @@ Keep it inviting and effortless — the user should feel they can just talk to y
 
 Take in whatever they give you and write it into `wiki/`, following `AGENTS.md`.
 Then offer to publish — a read-only link for the team that stays fresh on its
-own; on a yes, call `share_knowledge_base`.
+own; on a yes, call `share_knowledge_base`. Declining is an answer like any
+other, and they can publish later.
 
-Onboarding is finished when the user's material is saved as notes in `wiki/` and
-the knowledge base is published.
+Onboarding is finished once the user's material is saved as notes in `wiki/`.
+Publishing is not a condition: a knowledge base nobody else reads is still set
+up.
